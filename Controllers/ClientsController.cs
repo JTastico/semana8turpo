@@ -63,24 +63,22 @@ public class ClientsController : ControllerBase
 
         return Ok(products);
     }
-    
-    [HttpGet("by-product/{productId}")]
-    public async Task<IActionResult> GetClientsByProduct(int productId)
+    [HttpGet("names-by-product/{productId}")]
+    public async Task<IActionResult> GetClientNamesByProduct(int productId)
     {
-        // Verificamos si el producto existe para dar una respuesta 404 más clara.
         var productExists = await _context.Products.AnyAsync(p => p.Productid == productId);
         if (!productExists)
         {
             return NotFound($"No se encontró el producto con ID {productId}.");
         }
 
-        var clients = await _clientService.GetClientsByProductAsync(productId);
+        var clientNames = await _clientService.GetClientNamesByProductAsync(productId);
 
-        if (clients == null || !clients.Any())
+        if (clientNames == null || !clientNames.Any())
         {
             return NotFound($"Ningún cliente ha comprado el producto con ID {productId}.");
         }
 
-        return Ok(clients);
+        return Ok(clientNames);
     }
 }

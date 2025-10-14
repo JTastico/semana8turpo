@@ -73,17 +73,15 @@ public class ClientService : IClientService
         return products;
     }
     
-    public async Task<IEnumerable<Client>> GetClientsByProductAsync(int productId)
+    public async Task<IEnumerable<string>> GetClientNamesByProductAsync(int productId)
     {
-        // ⭐ ¡AQUÍ ESTÁ LA LÓGICA LINQ DEL EJERCICIO 12! ⭐
-        var clients = await _context.Orderdetails
+        var clientNames = await _context.Orderdetails
             .Where(od => od.Productid == productId)
-            .Include(od => od.Order)
-            .ThenInclude(o => o.Client)
-            .Select(od => od.Order.Client)
+            .Select(od => od.Order.Client.Name)
             .Distinct()
             .ToListAsync();
 
-        return clients;
+        return clientNames;
     }
+
 }

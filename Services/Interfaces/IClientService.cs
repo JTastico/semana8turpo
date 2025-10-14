@@ -8,6 +8,6 @@ public interface IClientService
     Task<IEnumerable<Client>> GetClientsByNameAsync(string name);
     Task<ClientOrderCountDto?> GetClientWithMostOrdersAsync();
     Task<IEnumerable<Product>> GetProductsPurchasedByClientAsync(int clientId);
-    Task<IEnumerable<Client>> GetClientsByProductAsync(int productId);
+    Task<IEnumerable<string>> GetClientNamesByProductAsync(int productId);
 
 }
