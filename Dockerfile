@@ -1,30 +1,32 @@
-﻿# ====== BUILD STAGE ======
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+﻿# Consulte https://aka.ms/customizecontainer para aprender a personalizar su contenedor de depuración y cómo Visual Studio usa este Dockerfile para compilar sus imágenes para una depuración más rápida.
 
-# Copiamos la solución y restauramos
-COPY Lab8-JamilTurpo.sln ./
-COPY Lab8-JamilTurpo/*.csproj Lab8-JamilTurpo/
-RUN dotnet restore Lab8-JamilTurpo.sln
-
-# Copiamos todo el proyecto
-COPY . .
-
-# Construimos la app en modo Release
-RUN dotnet publish Lab8-JamilTurpo/Lab8-JamilTurpo.csproj -c Release -o /app/publish
-
-
-# ====== RUNTIME STAGE ======
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# Esta fase se usa cuando se ejecuta desde VS en modo rápido (valor predeterminado para la configuración de depuración)
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+USER app
 WORKDIR /app
-
-# Copiar archivos publicados
-COPY --from=build /app/publish .
-
-# Exponer puerto Render usa EXPOSE 10000 o 5000 según necesite
 EXPOSE 8080
 
-# Necesario para Render (usa PORT variable)
-ENV ASPNETCORE_URLS=http://0.0.0.0:${PORT}
 
+# Esta fase se usa para compilar el proyecto de servicio
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+# CAMBIO AQUÍ: Copiamos directamente el csproj al directorio actual de trabajo (/src)
+COPY ["Lab8-JamilTurpo.csproj", "."]
+# CAMBIO AQUÍ: Restauramos usando el csproj directamente
+RUN dotnet restore "./Lab8-JamilTurpo.csproj"
+COPY . .
+WORKDIR "/src/."
+# CAMBIO AQUÍ: Compilamos apuntando al csproj
+RUN dotnet build "./Lab8-JamilTurpo.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# Esta fase se usa para publicar el proyecto de servicio que se copiará en la fase final.
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./Lab8-JamilTurpo.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+# Esta fase se usa en producción o cuando se ejecuta desde VS en modo normal (valor predeterminado cuando no se usa la configuración de depuración)
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Lab8-JamilTurpo.dll"]
