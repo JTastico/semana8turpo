@@ -1,3 +1,4 @@
+using Lab09.DTOs;
 using Lab8_JamilTurpo.Data;
 using Lab8_JamilTurpo.DTOs;
 using Lab8_JamilTurpo.Models;
@@ -15,20 +16,22 @@ public class OrderService : IOrderService
         _context = context;
     }
 
+
     public async Task<IEnumerable<OrderDetailDto>> GetOrderDetailsByIdAsync(int orderId)
     {
-        var orderDetails = await _context.Orderdetails 
-            .Include(od => od.Product) 
-            .Where(od => od.Orderid == orderId) 
-            .Select(od => new OrderDetailDto 
+        var orderDetails = await _context.Orderdetails
+            .Include(od => od.Product)
+            .Where(od => od.Orderid == orderId)
+            .Select(od => new OrderDetailDto
             {
-                ProductName = od.Product.Name, 
-                Quantity = od.Quantity 
+                ProductName = od.Product.Name,
+                Quantity = od.Quantity
             })
-            .ToListAsync(); 
+            .ToListAsync();
 
         return orderDetails;
     }
+
     public async Task<int?> GetTotalProductQuantityByOrderIdAsync(int orderId)
     {
         var orderExists = await _context.Orders.AnyAsync(o => o.Orderid == orderId);
@@ -36,14 +39,14 @@ public class OrderService : IOrderService
         {
             return null;
         }
-        
+
         int totalQuantity = await _context.Orderdetails
             .Where(od => od.Orderid == orderId)
             .SumAsync(od => od.Quantity);
 
         return totalQuantity;
     }
-    
+
     public async Task<IEnumerable<Order>> GetOrdersAfterDateAsync(DateTime date)
     {
         var orders = await _context.Orders
@@ -53,23 +56,27 @@ public class OrderService : IOrderService
         return orders;
     }
     
-    public async Task<IEnumerable<OrderWithDetailsDto>> GetAllOrdersWithDetailsAsync()
+
+    public async Task<IEnumerable<OrderDetailsDto>> GetAllOrdersWithDetailsAsync()
     {
         var ordersWithDetails = await _context.Orders
-            .Include(o => o.Orderdetails) 
-            .ThenInclude(od => od.Product) 
-            .Select(o => new OrderWithDetailsDto
+            .Include(order => order.Orderdetails)
+                .ThenInclude(orderDetail => orderDetail.Product)
+            .AsNoTracking()
+            .Select(order => new OrderDetailsDto
             {
-                OrderId = o.Orderid,
-                OrderDate = o.Orderdate,
-                ClientId = o.Clientid,
-                Details = o.Orderdetails.Select(od => new OrderDetailDto 
-                {
-                    ProductName = od.Product.Name,
-                    Quantity = od.Quantity
-                }).ToList()
+                OrderId = order.Orderid,
+                OrderDate = order.Orderdate,
+                Products = order.Orderdetails
+                    .Select(od => new ProductDto
+                    {
+                        ProductName = od.Product.Name,
+                        Quantity = od.Quantity,
+                        Price = od.Product.Price
+                    }).ToList()
             })
-            .ToListAsync(); 
+            .ToListAsync();
+        
         return ordersWithDetails;
     }
 }

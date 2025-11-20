@@ -1,8 +1,5 @@
 using Lab8_JamilTurpo.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace Lab8_JamilTurpo.Controllers;
 
 [Route("api/[controller]")]
@@ -57,10 +54,10 @@ public class OrdersController : ControllerBase
     }
     
     [HttpGet("with-details")]
-    public async Task<IActionResult> GetAllOrdersWithDetails()
+    public async Task<IActionResult> GetOrdersWithDetails()
     {
         var orders = await _orderService.GetAllOrdersWithDetailsAsync();
-
+        
         if (orders == null || !orders.Any())
         {
             return NotFound("No se encontraron órdenes.");

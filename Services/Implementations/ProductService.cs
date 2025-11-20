@@ -37,8 +37,7 @@ public class ProductService : IProductService
     public async Task<decimal> GetAverageProductPriceAsync()
     {
         var averagePrice = await _context.Products
-            .Select(p => p.Price)
-            .AverageAsync();
+            .AverageAsync(p => p.Price);
 
         return averagePrice;
     }

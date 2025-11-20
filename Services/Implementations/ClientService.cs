@@ -83,5 +83,59 @@ public class ClientService : IClientService
 
         return clientNames;
     }
+    
+    public async Task<IEnumerable<ClientOrderDto>> GetAllClientsWithOrdersAsync()
+    {
+        var clientOrders = await _context.Clients
+            .AsNoTracking()
+            .Select(client => new ClientOrderDto
+            {
+                ClientName = client.Name,
+                Orders = client.Orders
+                    .Select(order => new OrderDto
+                    {
+                        OrderId = order.Orderid,
+                        OrderDate = order.Orderdate
+                    }).ToList()
+            }).ToListAsync();
+
+        return clientOrders;
+    }
+    
+    public async Task<IEnumerable<ClientProductCountDto>> GetClientsWithProductCountAsync()
+    {
+        var clientsWithCount = await _context.Clients
+            .AsNoTracking()
+            .Select(client => new ClientProductCountDto
+            {
+                ClientName = client.Name,
+                TotalProducts = client.Orders
+                    .SelectMany(order => order.Orderdetails)
+                    .Sum(detail => detail.Quantity)
+            })
+            .ToListAsync();
+
+        return clientsWithCount;
+    }
+    
+    public async Task<IEnumerable<SalesByClientDto>> GetSalesByClientAsync()
+    {
+        var salesReport = await _context.Orders
+            .AsNoTracking()
+            .Include(order => order.Orderdetails)
+            .ThenInclude(orderDetail => orderDetail.Product)
+            .GroupBy(order => order.Clientid)
+            .Select(group => new SalesByClientDto
+            {
+                ClientName = _context.Clients
+                    .FirstOrDefault(c => c.Clientid == group.Key)!.Name,
+                TotalSales = group.Sum(order => order.Orderdetails
+                    .Sum(detail => detail.Quantity * detail.Product.Price))
+            })
+            .OrderByDescending(s => s.TotalSales)
+            .ToListAsync();
+
+        return salesReport;
+    }
 
 }

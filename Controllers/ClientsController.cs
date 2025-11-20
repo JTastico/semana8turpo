@@ -81,4 +81,31 @@ public class ClientsController : ControllerBase
 
         return Ok(clientNames);
     }
+    
+    [HttpGet("with-orders")]
+    public async Task<IActionResult> GetClientsWithOrders()
+    {
+        var clients = await _clientService.GetAllClientsWithOrdersAsync();
+        return Ok(clients);
+    }
+
+    [HttpGet("with-product-count")]
+    public async Task<IActionResult> GetClientsWithProductCount()
+    {
+        var clients = await _clientService.GetClientsWithProductCountAsync();
+        return Ok(clients);
+    }
+    
+    [HttpGet("sales-report")]
+    public async Task<IActionResult> GetSalesByClient()
+    {
+        var report = await _clientService.GetSalesByClientAsync();
+        
+        if (report == null || !report.Any())
+        {
+            return NotFound("No se encontraron datos para generar el reporte de ventas.");
+        }
+
+        return Ok(report);
+    }
 }
